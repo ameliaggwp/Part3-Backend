@@ -7,7 +7,7 @@ app.use(cors());
 //Without this json parser, req.body's body property would be undefined (in our post request)
 //This turns the json data into a JS object attached to body property
 app.use(express.json());
-
+app.use(express.static("build"));
 const generateId = () => {
   const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0;
 
