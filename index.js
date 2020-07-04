@@ -1,101 +1,10 @@
-require("dotenv").config();
-const express = require("express");
-const app = express();
-const cors = require("cors");
-const Note = require("./models/note");
+const app = require("./app")
+const http = require("http")
+const config = require("./utils/config")
+const logger = require("./utils/logger")
 
-app.use(cors());
-//Without this json parser, req.body's body property would be undefined (in our post request)
-//This turns the json data into a JS object attached to body property
-app.use(express.static("build"));
-app.use(express.json());
+const server = http.createServer(app)
 
-app.get("/", (req, res) => {
-  res.send("<h1>Hello World!</h1>");
-});
-
-app.get("/api/notes", (req, res) => {
-  Note.find({}).then((notes) => {
-    res.json(notes);
-  });
-});
-
-//Add new note
-app.post("/api/notes", (req, res) => {
-  const body = req.body;
-
-  if (!body.content) {
-    //Must use return here to stop code from executing further and creating an incorrect note
-    return res.status(400).json({
-      error: "content missing",
-    });
-  }
-
-  const note = new Note({
-    content: body.content,
-    important: body.important || false,
-    date: new Date(),
-  });
-
-  note.save().then((savedNote) => {
-    res.json(savedNote);
-  });
-});
-
-//Fetch individual note
-app.get("/api/notes/:id", (req, res, next) => {
-  Note.findById(req.params.id)
-    .then((note) => {
-      if (note) {
-        res.json(note);
-      } else {
-        res.status(404).end();
-      }
-    })
-    .catch((error) => next(error));
-});
-
-app.put("/api/notes/:id", (req, res, next) => {
-  const body = req.body;
-
-  const note = {
-    content: body.content,
-    important: body.important,
-  };
-
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
-    .then((updatedNote) => {
-      res.json(updatedNote);
-    })
-    .catch((error) => next(error));
-});
-
-app.delete("/api/notes/:id", (req, res, next) => {
-  Note.findByIdAndRemove(req.params.id)
-    .then((result) => {
-      res.status(204).end();
-    })
-    .catch((error) => next(error));
-});
-
-const errorHandler = (error, req, res, next) => {
-  console.log(error.message);
-
-  if (error.name === "CastError") {
-    return res.status(400).send({ error: "malformatted id" });
-  }
-  next(error);
-};
-
-app.use(errorHandler);
-
-const unknownEndpoint = (req, res) => {
-  res.status(404).send({ error: "unknown endpoint" });
-};
-
-app.use(unknownEndpoint);
-
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(config.PORT, () => {
+  logger.info(`Server running on port ${config.PORT}`)
+})
