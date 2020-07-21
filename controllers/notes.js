@@ -35,7 +35,7 @@ notesRouter.delete("/:id", async (req, res) => {
   res.status(204).end()
 })
 
-notesRouter.put("/:id", (req, res, next) => {
+notesRouter.put("/:id", async (req, res) => {
   const body = req.body
 
   const note = {
@@ -43,11 +43,8 @@ notesRouter.put("/:id", (req, res, next) => {
     important: body.important,
   }
 
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
-    .then((updatedNote) => {
-      res.json(updatedNote.toJSON())
-    })
-    .catch((error) => next(error))
+  await Note.findByIdAndUpdate(req.params.id, note, { new: true })
+  res.json(updatedNote)
 })
 
 module.exports = notesRouter
