@@ -1,7 +1,6 @@
 const notesRouter = require("express").Router()
 const Note = require("../models/note")
 const User = require("../models/user")
-const usersRouter = require("./users")
 
 notesRouter.get("/", async (req, res) => {
   const notes = await Note.find({})
@@ -26,7 +25,7 @@ notesRouter.post("/", async (req, res) => {
 
   const note = new Note({
     content: body.content,
-    important: body.important || false,
+    important: body.important === undefined ? false : body.important,
     date: new Date(),
     user: user._id,
   })
@@ -43,7 +42,7 @@ notesRouter.delete("/:id", async (req, res) => {
   res.status(204).end()
 })
 
-notesRouter.put("/:id", async (req, res) => {
+notesRouter.put("/:id", (req, res, next) => {
   const body = req.body
 
   const note = {
@@ -51,8 +50,11 @@ notesRouter.put("/:id", async (req, res) => {
     important: body.important,
   }
 
-  await Note.findByIdAndUpdate(req.params.id, note, { new: true })
-  res.json(updatedNote)
+  Note.findByIdAndUpdate(req.params.id, note, { new: true })
+    .then((updatedNote) => {
+      res.json(updatedNote.toJSON())
+    })
+    .catch((error) => next(error))
 })
 
 module.exports = notesRouter
