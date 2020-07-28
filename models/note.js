@@ -8,10 +8,7 @@ const noteSchema = new mongoose.Schema({
     minlength: 5,
     required: true,
   },
-  date: {
-    type: Date,
-    required: false,
-  },
+  date: Date,
   important: Boolean,
   user: {
     type: mongoose.Schema.Types.ObjectId,

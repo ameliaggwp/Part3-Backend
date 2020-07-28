@@ -2,24 +2,14 @@ const notesRouter = require("express").Router()
 const Note = require("../models/note")
 const User = require("../models/user")
 
-notesRouter.get("/", async (req, res) => {
-  const notes = await Note.find({})
-  res.json(notes.map((note) => note.toJSON()))
+notesRouter.get("/", async (request, response) => {
+  const notes = await Note.find({}).populate("user", { username: 1, name: 1 })
+
+  response.json(notes.map((note) => note.toJSON()))
 })
 
-//Fetch individual note
-notesRouter.get("/:id", async (req, res) => {
-  const note = await Note.findById(req.params.id)
-  if (note) {
-    res.json(note.toJSON())
-  } else {
-    res.status(404).end()
-  }
-})
-
-//Add new note
-notesRouter.post("/", async (req, res) => {
-  const body = req.body
+notesRouter.post("/", async (request, response) => {
+  const body = request.body
 
   const user = await User.findById(body.userId)
 
@@ -34,27 +24,36 @@ notesRouter.post("/", async (req, res) => {
   user.notes = user.notes.concat(savedNote._id)
   await user.save()
 
-  res.json(savedNote)
+  response.json(savedNote.toJSON())
 })
 
-notesRouter.delete("/:id", async (req, res) => {
-  await Note.findByIdAndRemove(req.params.id)
-  res.status(204).end()
+notesRouter.get("/:id", async (request, response) => {
+  const note = await Note.findById(request.params.id)
+  if (note) {
+    response.json(note.toJSON())
+  } else {
+    response.status(404).end()
+  }
 })
 
-notesRouter.put("/:id", (req, res, next) => {
-  const body = req.body
+notesRouter.put("/:id", (request, response, next) => {
+  const body = request.body
 
   const note = {
     content: body.content,
     important: body.important,
   }
 
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
     .then((updatedNote) => {
-      res.json(updatedNote.toJSON())
+      response.json(updatedNote.toJSON())
     })
     .catch((error) => next(error))
+})
+
+notesRouter.delete("/:id", async (request, response) => {
+  await Note.findByIdAndRemove(request.params.id)
+  response.status(204).end()
 })
 
 module.exports = notesRouter

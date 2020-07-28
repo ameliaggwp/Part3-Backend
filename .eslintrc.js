@@ -22,5 +22,7 @@ module.exports = {
   },
   globals: {
     process: "readonly",
+    Atomics: "readonly",
+    SharedArrayBuffer: "readonly",
   },
 }
